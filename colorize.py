@@ -53,7 +53,7 @@ if __name__ == "__main__":
         "--exp_name", type=str, default="Colorize", help="experiment name"
     )
     parser.add_argument(
-        "--data_path", type=str, default="./mnist_net.pth", help="path to data"
+        "--data_path", type=str, default="data/landscapes", help="path to data"
     )
     parser.add_argument("--batch_size", type=int, default=10, help="batch size")
     parser.add_argument("--epochs", type=int, default=20, help="number of epochs")
@@ -76,7 +76,22 @@ if __name__ == "__main__":
     optimizer = optim.Adam(unet.parameters(), lr=lr)
     writer = SummaryWriter(f"runs/{exp_name}")
     train(unet, optimizer, loader, epochs=epochs, writer=writer)
-    writer.add_graph(unet)
+    x, y = next(iter(loader))
+
+    with torch.no_grad():
+        all_embeddings = []
+        all_labels = []
+        for x, y in loader:
+            x, y = x.to(device), y.to(device)
+            embeddings = unet.get_features(x).view(-1, 128 * 28 * 28)
+            all_embeddings.append(embeddings)
+            all_labels.append(y)
+            if len(all_embeddings) > 6:
+                break
+        embeddings = torch.cat(all_embeddings)
+        labels = torch.cat(all_labels)
+        writer.add_embedding(embeddings, label_img=labels, global_step=1)
+        writer.add_graph(unet, x.to(device))
 
     # Save model weights
     torch.save(unet.state_dict(), "unet.pth")
