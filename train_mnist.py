@@ -85,7 +85,7 @@ if __name__ == "__main__":
     net = MNISTNet()
     # setting net on device(GPU if available, else CPU)
     net = net.to(device)
-    optimizer = optim.Adam(net.parameters(), lr=lr)
+    optimizer = optim.ADAM(net.parameters(), lr=lr)
 
     train(
         net=net, optimizer=optimizer, loader=trainloader, writer=writer, epochs=epochs
